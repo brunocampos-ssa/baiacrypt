@@ -1,6 +1,7 @@
 package prompt
 
 import (
+	"crypto/subtle"
 	"errors"
 	"fmt"
 	"os"
@@ -23,7 +24,7 @@ func PromptPassword(confirm bool) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		if string(password) != string(confirmPassword) {
+		if subtle.ConstantTimeCompare(password, confirmPassword) != 1 {
 			return nil, errors.New("passwords do not match")
 		}
 	}
