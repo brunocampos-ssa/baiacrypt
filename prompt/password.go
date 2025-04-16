@@ -1,7 +1,6 @@
 package prompt
 
 import (
-	"crypto/subtle"
 	"errors"
 	"fmt"
 	"os"
@@ -9,9 +8,15 @@ import (
 	"golang.org/x/term"
 )
 
+// PromptPassword reads a password from terminal and optionally confirms it.
 func PromptPassword(confirm bool) ([]byte, error) {
+	return readPasswordWithConfirm(confirm, os.Stdin)
+}
+
+// readPasswordWithConfirm allows injecting the input source (used in tests)
+func readPasswordWithConfirm(confirm bool, in *os.File) ([]byte, error) {
 	fmt.Print("Enter password: ")
-	password, err := term.ReadPassword(int(os.Stdin.Fd()))
+	password, err := term.ReadPassword(int(in.Fd()))
 	fmt.Println()
 	if err != nil {
 		return nil, err
@@ -19,14 +24,15 @@ func PromptPassword(confirm bool) ([]byte, error) {
 
 	if confirm {
 		fmt.Print("Confirm password: ")
-		confirmPassword, err := term.ReadPassword(int(os.Stdin.Fd()))
+		confirmPassword, err := term.ReadPassword(int(in.Fd()))
 		fmt.Println()
 		if err != nil {
 			return nil, err
 		}
-		if subtle.ConstantTimeCompare(password, confirmPassword) != 1 {
+		if string(password) != string(confirmPassword) {
 			return nil, errors.New("passwords do not match")
 		}
 	}
+
 	return password, nil
 }
